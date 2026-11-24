@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Olesia's Advent Calendar</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#0b1230;font-family:Georgia,'Times New Roman',serif;color:#fff;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+body{background:radial-gradient(ellipse at 50% 0%,#24336e 0%,#101a45 55%,#080d26 100%)}
+body:before{content:"";position:fixed;inset:0;background-image:radial-gradient(1.5px 1.5px at 12% 18%,#fff8 50%,transparent 51%),radial-gradient(1px 1px at 78% 12%,#fff9 50%,transparent 51%),radial-gradient(1.5px 1.5px at 40% 8%,#fff7 50%,transparent 51%),radial-gradient(1px 1px at 90% 70%,#fff8 50%,transparent 51%),radial-gradient(1px 1px at 6% 82%,#fff7 50%,transparent 51%),radial-gradient(1.5px 1.5px at 60% 92%,#fff6 50%,transparent 51%);pointer-events:none}
+#wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#stage{position:relative;width:min(100vw,calc(100dvh * 1.3418));aspect-ratio:1060/790;container-type:inline-size;transition:filter .6s}
+#stage img{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+.drawer{position:absolute;padding:0;margin:0;border:0;background:transparent;border-radius:5%;cursor:pointer;outline:none;z-index:1}
+.sym{position:absolute;left:18%;top:22%;width:64%;height:54%;opacity:.5;transition:opacity .4s}
+.sym i{display:block;width:100%;height:100%;background:#fff;-webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat}
+.num{position:absolute;left:0;right:0;bottom:4%;text-align:center;font-weight:bold;font-size:1.5vw;font-size:1.5cqw;line-height:1;color:#ffe9e6;text-shadow:0 1px 2px #7a1510}
+.drawer.ready .sym{opacity:1;animation:tw 2.2s ease-in-out infinite;filter:drop-shadow(0 0 5px rgba(255,220,120,.9))}
+.drawer.ready:after{content:"";position:absolute;inset:3%;border-radius:6%;border:2px solid rgba(255,220,120,.85);animation:ring 2.2s ease-in-out infinite;pointer-events:none}
+.drawer.done .sym{opacity:1}
+.drawer.done .sym i{background:#ffd466}
+.drawer.done .num{color:#ffd466}
+@keyframes tw{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes ring{0%,100%{opacity:.25}50%{opacity:1}}
+.drawer.shine{z-index:3;animation:shine .9s ease-in-out forwards}
+@keyframes shine{0%{filter:brightness(1);box-shadow:0 0 0 0 rgba(255,214,102,0)}50%{filter:brightness(1.55);box-shadow:0 0 26px 10px rgba(255,214,102,.95)}100%{filter:brightness(1.3);box-shadow:0 0 36px 14px rgba(255,214,102,.75);transform:scale(1.07)}}
+.drawer.nope{animation:nope .45s}
+@keyframes nope{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+#dim{position:fixed;inset:0;background:rgba(6,10,30,.82);opacity:0;pointer-events:none;transition:opacity .9s;z-index:20}
+#dim.on{opacity:1;pointer-events:auto}
+#flyer{position:fixed;display:none;z-index:25;pointer-events:none;will-change:transform;filter:drop-shadow(0 0 18px rgba(255,214,102,.95)) drop-shadow(0 0 50px rgba(255,150,60,.65))}
+#flyer i{display:block;width:100%;height:100%;background:#fff;-webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat}
+#paper{position:fixed;left:50%;top:40%;width:min(580px,88vw);transform:translate(-50%,-50%) rotate(-1deg) scale(.9);opacity:0;pointer-events:none;z-index:50;background:#f7edd3;color:#3b2a1a;border-radius:6px;padding:26px 28px 22px;box-shadow:0 14px 50px rgba(0,0,0,.55),inset 0 0 40px rgba(150,100,40,.18);transition:opacity .6s,transform .6s;user-select:text;-webkit-user-select:text}
+#paper.on{opacity:1;transform:translate(-50%,-50%) rotate(-1deg) scale(1);pointer-events:auto}
+#paper .tag{font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:#a0522d;margin-bottom:10px}
+#paper .q{font-size:clamp(20px,3.2vw,28px);line-height:1.35;font-style:italic}
+#paper .row{display:flex;gap:10px;margin-top:20px}
+#paper input{flex:1;min-width:0;font:inherit;font-size:22px;padding:12px 14px;border:2px solid #c9a56a;border-radius:8px;background:#fffaf0;color:#3b2a1a;outline:none;user-select:text;-webkit-user-select:text}
+#paper input:focus{border-color:#b8322a}
+.btn{font:inherit;font-size:20px;padding:12px 22px;border:0;border-radius:8px;background:#b8322a;color:#fff;cursor:pointer}
+.btn.ghost{background:transparent;color:#8a5a2b;padding:8px 4px;font-size:16px}
+#paper .msg{min-height:24px;margin-top:10px;font-size:17px;color:#b8322a}
+#paper .hint{margin-top:2px;font-size:17px;color:#6b4a22}
+#paper .foot{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+#paper .big{font-size:clamp(34px,6vw,54px);color:#b8322a;font-weight:bold;text-align:center;margin:4px 0 6px}
+#paper .done{text-align:center;font-size:clamp(20px,3.2vw,28px);line-height:1.4}
+#paper .acts{display:flex;justify-content:center;gap:12px;margin-top:20px}
+#paper img.map{display:block;width:100%;border-radius:4px;margin-top:12px}
+#paper.shake{animation:pshake .45s}
+@keyframes pshake{0%,100%{margin-left:0}20%{margin-left:-10px}40%{margin-left:10px}60%{margin-left:-7px}80%{margin-left:5px}}
+#toast{position:fixed;left:50%;bottom:5%;transform:translateX(-50%) translateY(20px);background:rgba(10,16,40,.9);border:1px solid #ffd46688;color:#ffe9a8;padding:12px 22px;border-radius:30px;font-size:18px;opacity:0;pointer-events:none;transition:all .35s;z-index:80;white-space:nowrap}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+#lock{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:20px;background:rgba(7,11,32,.74);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);transition:opacity 1s}
+#lock.off{opacity:0;pointer-events:none}
+#lock h1{margin:12px 0 4px;font-size:clamp(28px,5vw,48px);font-style:italic;font-weight:normal;color:#ffd466}
+#lock p{margin:0 0 22px;font-size:clamp(16px,2.4vw,22px);color:#dfe6ff}
+.cd{display:flex;gap:clamp(8px,2vw,18px)}
+.cd div{width:clamp(66px,15vw,118px);padding:14px 0 10px;border-radius:14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,214,102,.45)}
+.cd b{display:block;font-size:clamp(32px,7vw,58px);font-weight:normal;color:#fff;font-variant-numeric:tabular-nums}
+.cd span{font-size:clamp(11px,1.8vw,15px);letter-spacing:.14em;text-transform:uppercase;color:#ffd466}
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:100}
+
+.recbox{display:flex;align-items:center;gap:18px;margin-top:18px}
+.mic{flex:none;width:84px;height:84px;border-radius:50%;border:0;background:#b8322a;cursor:pointer;position:relative;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.mic:before{content:"";position:absolute;left:31px;top:17px;width:22px;height:34px;border-radius:12px;background:#fff}
+.mic:after{content:"";position:absolute;left:24px;top:34px;width:36px;height:26px;border:4px solid #fff;border-top:0;border-radius:0 0 20px 20px}
+.mic.on{background:#e0241b;animation:micp 1s infinite}
+@keyframes micp{0%,100%{box-shadow:0 0 0 0 rgba(224,36,27,.6)}50%{box-shadow:0 0 0 16px rgba(224,36,27,0)}}
+.meter{flex:1;height:64px;display:flex;align-items:center;gap:4px}
+.meter i{flex:1;background:#c9a56a;border-radius:3px;height:8%;transition:height .08s}
+#wrap.up{z-index:30}
+#dim.song{background:rgba(6,10,30,.4)}
+#paper.low.on{top:auto;bottom:3%;transform:translate(-50%,0)}
+.drawer.pulse{z-index:3;animation:pulse .7s ease-out}
+@keyframes pulse{0%{transform:scale(1);filter:brightness(1)}30%{transform:scale(1.12);filter:brightness(1.6);box-shadow:0 0 24px 8px rgba(255,214,102,.9)}100%{transform:scale(1);filter:brightness(1)}}
+</style>
+</head>
+<body>
+<div id="wrap"><div id="stage"><img src="cabinet.webp" alt="Advent calendar"></div></div>
+<div id="dim"></div>
+<div id="flyer"><i></i></div>
+<div id="paper" role="dialog" aria-live="polite"></div>
+<div id="toast"></div>
+<div id="lock">
+<svg width="84" height="96" viewBox="0 0 84 96" aria-hidden="true"><path d="M20 42V28a22 22 0 0 1 44 0v14" fill="none" stroke="#ffd466" stroke-width="9" stroke-linecap="round"/><rect x="8" y="42" width="68" height="48" rx="10" fill="#ffd466"/><circle cx="42" cy="62" r="7" fill="#7a1510"/><rect x="39" y="64" width="6" height="14" rx="3" fill="#7a1510"/></svg>
+<h1>Olesia's Advent Calendar</h1>
+<p>The first drawer opens on December 1</p>
+<div class="cd"><div><b id="cd-d">0</b><span>days</span></div><div><b id="cd-h">00</b><span>hours</span></div><div><b id="cd-m">00</b><span>minutes</span></div><div><b id="cd-s">00</b><span>seconds</span></div></div>
+</div>
+<canvas id="fx"></canvas>
+<script src="data.js"></script>
+<script>
+(function(){
+var YEAR=2026, NAME='Olesia', KEY='olesia-advent-2026';
+var RECTS=[[27,410],[146,410],[265,410],[384,410],[27,532],[146,532],[265,532],[384,532],[27,654],[146,654],[265,654],[384,654],[564,410],[684,410],[803,410],[922,410],[564,532],[684,532],[803,532],[922,532],[564,654],[684,654],[803,654],[922,654]];
+var W=1060,H=790,S=108;
+var stage=document.getElementById('stage'),dim=document.getElementById('dim'),flyer=document.getElementById('flyer'),paper=document.getElementById('paper'),toast=document.getElementById('toast'),lock=document.getElementById('lock');
+var solved={},busy=false,btns=[],cur=0,fails=0,fwTimer=null;
+try{var sv=JSON.parse(localStorage.getItem(KEY)||'{}');if(sv&&sv.s)solved=sv.s;for(var k0 in solved){if(solved[k0]===true)solved[k0]=2;}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({s:solved}));}catch(e){}}
+function now(){
+  var m=/preview-(\d{1,2})-(\d{1,2})/.exec(location.hash||'')||/[?&]preview=(\d{1,2})-(\d{1,2})/.exec(location.search||'');
+  if(m)return new Date(YEAR,parseInt(m[1],10)-1,parseInt(m[2],10),9,0,0);
+  return new Date();
+}
+function openDate(n){return new Date(YEAR,11,n,0,0,0);}
+function isOpen(n){return now()>=openDate(n);}
+function pad(n){n=Math.floor(n);return n<10?'0'+n:''+n;}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
+function sym(n){return 'url(sym/s'+pad(n)+'.png)';}
+
+for(var i=0;i<24;i++){(function(i){
+  var n=i+1,b=document.createElement('button');
+  b.className='drawer';b.setAttribute('aria-label','Drawer '+n);
+  b.style.left=(RECTS[i][0]/W*100)+'%';b.style.top=(RECTS[i][1]/H*100)+'%';b.style.width=(S/W*100)+'%';b.style.height=(S/H*100)+'%';
+  b.innerHTML='<span class="sym" style="--m:'+sym(n)+'"><i></i></span><span class="num">'+n+'</span>';
+  b.onclick=function(){tap(n,b);};
+  stage.appendChild(b);btns.push(b);
+})(i);}
+function refresh(){
+  for(var i=0;i<24;i++){
+    var n=i+1,b=btns[i];
+    b.classList.toggle('done',solved[n]===2);
+    b.classList.toggle('ready',solved[n]!==2&&isOpen(n)&&isOpen(1));
+  }
+}
+function showToast(t){toast.textContent=t;toast.classList.add('on');clearTimeout(showToast.t);showToast.t=setTimeout(function(){toast.classList.remove('on');},2400);}
+
+var cv=document.getElementById('fx'),ctx=cv.getContext('2d'),dpr=1,parts=[],amb=[];
+function resize(){dpr=Math.min(window.devicePixelRatio||1,2);cv.width=innerWidth*dpr;cv.height=innerHeight*dpr;}
+resize();window.addEventListener('resize',resize);
+for(var k=0;k<70;k++)amb.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:1.2+Math.random()*2.4,v:14+Math.random()*34,p:Math.random()*6.28,a:.45+Math.random()*.45});
+function star(x,y,r,rot){ctx.beginPath();for(var i=0;i<10;i++){var a=rot+i*Math.PI/5-Math.PI/2,rr=i%2?r*.45:r;ctx.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr);}ctx.closePath();ctx.fill();}
+function addStars(x,y,c,cnt){cnt=cnt||26;for(var i=0;i<cnt;i++){var a=Math.random()*6.28,v=120+Math.random()*320;parts.push({t:'star',x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-40,g:60,d:.985,life:1.1+Math.random()*.9,age:0,s:5+Math.random()*9,rot:Math.random()*6,vr:(Math.random()-.5)*8,c:['#ffd466','#fff3b0','#ffffff','#ffb347'][i%4],delay:0});}}
+function burst(x,y){var cols=['#ffd466','#ff5a4d','#ffffff','#7be08f','#7fc8ff','#ff9ad5'],c=cols[Math.floor(Math.random()*cols.length)],c2=cols[Math.floor(Math.random()*cols.length)];for(var i=0;i<90;i++){var a=Math.random()*6.28,v=60+Math.random()*(i%3?230:300);parts.push({t:'spark',x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,g:130,d:.975,life:1.2+Math.random()*.8,age:0,s:1.8+Math.random()*1.6,c:i%2?c:c2,delay:0});}}
+function frame(t){
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,innerWidth,innerHeight);
+  var dt=frame.last?Math.min((t-frame.last)/1000,.05):.016;frame.last=t;
+  ctx.fillStyle='#fff';
+  for(var i=0;i<amb.length;i++){var f=amb[i];f.y+=f.v*dt;f.p+=dt;f.x+=Math.sin(f.p)*12*dt;if(f.y>innerHeight+5){f.y=-5;f.x=Math.random()*innerWidth;}ctx.globalAlpha=f.a*.8;ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,6.28);ctx.fill();}
+  for(var j=parts.length-1;j>=0;j--){
+    var p=parts[j];
+    if(p.delay>0){p.delay-=dt;continue;}
+    p.age+=dt;if(p.age>=p.life){parts.splice(j,1);continue;}
+    p.vx*=Math.pow(p.d,dt*60);p.vy=p.vy*Math.pow(p.d,dt*60)+p.g*dt;
+    if(p.t==='snow'){p.ph+=dt*3;p.x+=p.vx*dt+Math.sin(p.ph)*14*dt;}else p.x+=p.vx*dt;
+    p.y+=p.vy*dt;
+    var k=p.age/p.life,al=p.t==='snow'?Math.min(1,p.age*4)*(1-k*k):1-k;
+    ctx.globalAlpha=Math.max(0,al);ctx.fillStyle=p.c;
+    if(p.t==='star'){p.rot+=p.vr*dt;ctx.globalCompositeOperation='lighter';star(p.x,p.y,p.s,p.rot);ctx.globalCompositeOperation='source-over';}
+    else if(p.t==='spark'){ctx.globalCompositeOperation='lighter';ctx.beginPath();ctx.arc(p.x,p.y,p.s*(1-k*.5),0,6.28);ctx.fill();ctx.globalCompositeOperation='source-over';}
+    else{ctx.beginPath();ctx.arc(p.x,p.y,p.s,0,6.28);ctx.fill();}
+  }
+  ctx.globalAlpha=1;
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+var imgCache={};
+function symPixels(n){
+  return new Promise(function(res){
+    var im=new Image();
+    im.onload=function(){
+      try{
+        var c=document.createElement('canvas');c.width=c.height=90;var x=c.getContext('2d');x.drawImage(im,0,0,90,90);
+        var d=x.getImageData(0,0,90,90).data,pts=[];
+        for(var yy=0;yy<90;yy++)for(var xx=0;xx<90;xx++)if(d[(yy*90+xx)*4+3]>128)pts.push([xx/90,yy/90]);
+        res(pts);
+      }catch(e){res(null);}
+    };
+    im.onerror=function(){res(null);};
+    im.src='sym/s'+pad(n)+'.png';
+  });
+}
+async function symbolToSnow(n,cx,cy,size){
+  var pts=await symPixels(n);
+  var count=360;
+  for(var i=0;i<count;i++){
+    var u,v;
+    if(pts&&pts.length){var q=pts[Math.floor(Math.random()*pts.length)];u=q[0];v=q[1];}else{var a=Math.random()*6.28,r=Math.sqrt(Math.random())*.4;u=.5+Math.cos(a)*r;v=.5+Math.sin(a)*r;}
+    parts.push({t:'snow',x:cx-size/2+u*size,y:cy-size/2+v*size,vx:(Math.random()-.5)*40,vy:10+Math.random()*50,g:25+Math.random()*30,d:.99,life:2.6+Math.random()*2,age:0,s:1.8+Math.random()*3.2,ph:Math.random()*6,c:'#ffffff',delay:Math.random()*.5});
+  }
+}
+
+function setPaper(html){paper.innerHTML=html;}
+function showPaper(){paper.classList.add('on');}
+function hidePaper(){paper.classList.remove('on');}
+function esc(s){return s.replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+async function tap(n,b){
+  if(busy)return;
+  if(!isOpen(1))return;
+  if(!isOpen(n)){
+    b.classList.remove('nope');void b.offsetWidth;b.classList.add('nope');
+    setTimeout(function(){b.classList.remove('nope');},500);
+    var days=Math.ceil((openDate(n)-now())/86400000);
+    showToast(days<=1?'This drawer opens tomorrow':'This drawer opens on December '+n+' (in '+days+' days)');
+    return;
+  }
+  busy=true;cur=n;
+  if(solved[n]===2){dim.classList.add('on');showDone(n,false);busy=false;return;}
+  if(solved[n]===1){dim.classList.add('on');showRecord(n);busy=false;return;}
+  var r=b.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+  var symEl=b.querySelector('.sym'),sw=symEl.getBoundingClientRect().width;
+  b.classList.add('shine');addStars(cx,cy);
+  await sleep(450);addStars(cx,cy);
+  await sleep(450);
+  var F=Math.min(innerWidth,innerHeight)*.5;
+  flyer.style.setProperty('--m',sym(n));
+  flyer.style.width=flyer.style.height=F+'px';
+  flyer.style.left=(innerWidth/2-F/2)+'px';flyer.style.top=(innerHeight/2-F/2)+'px';
+  flyer.style.display='block';
+  var s0=sw/F,dx=cx-innerWidth/2,dy=cy-innerHeight/2;
+  flyer.style.opacity=1;
+  symEl.style.visibility='hidden';
+  b.classList.remove('shine');
+  dim.classList.add('on');
+  var fly=flyer.animate([
+    {transform:'translate('+dx+'px,'+dy+'px) scale('+s0+') rotate(0deg)',offset:0},
+    {transform:'translate('+(dx*.62)+'px,'+(dy*.62)+'px) scale('+(s0+(1-s0)*.35)+') rotate(-14deg)',offset:.3},
+    {transform:'translate('+(dx*.25)+'px,'+(dy*.25)+'px) scale('+(s0+(1-s0)*.75)+') rotate(11deg)',offset:.65},
+    {transform:'translate(0px,0px) scale(1) rotate(0deg)',offset:1}
+  ],{duration:1600,easing:'cubic-bezier(.25,.8,.25,1)',fill:'forwards'});
+  await fly.finished;
+  addStars(innerWidth/2,innerHeight/2);
+  var dance=flyer.animate([
+    {transform:'translate(0,0) scale(1) rotate(0deg)'},
+    {transform:'translate(0,-14px) scale(1.07) rotate(-6deg)'},
+    {transform:'translate(0,6px) scale(.97) rotate(5deg)'},
+    {transform:'translate(0,-10px) scale(1.06) rotate(-4deg)'},
+    {transform:'translate(0,0) scale(1) rotate(0deg)'}
+  ],{duration:1100,easing:'ease-in-out'});
+  await dance.finished;
+  symbolToSnow(n,innerWidth/2,innerHeight/2,F);
+  var fade=flyer.animate([{opacity:1,filter:'blur(0px)'},{opacity:0,filter:'blur(5px)'}],{duration:900,fill:'forwards'});
+  await sleep(1000);
+  await fade.finished;
+  fly.cancel();fade.cancel();flyer.style.display='none';
+  symEl.style.visibility='';
+  showRiddle(n);
+  busy=false;
+}
+
+function showRiddle(n){
+  fails=0;cur=n;
+  setPaper('<div class="tag">Day '+n+' · riddle</div><div class="q">'+esc(CAL.days[n-1].q)+'</div><div class="row"><input id="ans" type="text" placeholder="Your answer" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go"><button class="btn" id="go">Open</button></div><div class="msg" id="msg"></div><div class="hint" id="hint"></div><div class="foot"><button class="btn ghost" id="back">Back to the calendar</button></div>');
+  var inp=document.getElementById('ans');
+  inp.oninput=function(){document.getElementById('msg').textContent='';};
+  inp.onkeydown=function(e){if(e.key==='Enter')check();};
+  document.getElementById('go').onclick=check;
+  document.getElementById('back').onclick=closeAll;
+  showPaper();
+  setTimeout(function(){try{inp.focus();}catch(e){}},500);
+}
+function check(){
+  var inp=document.getElementById('ans'),msg=document.getElementById('msg'),v=inp.value;
+  if(!norm(v)){msg.textContent='Type an answer first.';return;}
+  var hv=h53(norm(v));
+  if(CAL.days[cur-1].a.indexOf(hv)>=0){
+    solved[cur]=1;save();refresh();
+    inp.blur();
+    showRecord(cur);
+  }else{
+    fails++;
+    msg.textContent='Not quite. Think again!';
+    if(fails>=2)document.getElementById('hint').textContent='Hint: '+CAL.days[cur-1].hint;
+    paper.classList.remove('shake');void paper.offsetWidth;paper.classList.add('shake');
+    setTimeout(function(){paper.classList.remove('shake');},500);
+    inp.select();
+  }
+}
+function showDone(n,fire){
+  var line=n===24?'Merry Christmas Eve! See you tomorrow.':'See you tomorrow.';
+  var mapBtn=CAL.maps[n-1]?'<button class="btn" id="map">Show my map</button>':'';
+  var hid=fire?'visibility:hidden':'';
+  var songBtn=n===24?'<button class="btn" id="song" style="background:#2f7d4f;'+hid+'">Play my song</button>':'';
+  setPaper('<div class="big">Ho ho ho!</div><div class="done">You did great today, '+NAME+'!<br>'+line+'</div><div class="acts">'+mapBtn+songBtn+'<button class="btn" id="fin" style="'+hid+'">Back to the calendar</button></div>');
+  document.getElementById('fin').onclick=closeAll;
+  var sb=document.getElementById('song');if(sb)sb.onclick=showSong;
+  var mb=document.getElementById('map');if(mb)mb.onclick=function(){showMap(n);};
+  showPaper();
+  if(fire){
+    var count=0;clearInterval(fwTimer);
+    function one(){burst(innerWidth*(.12+Math.random()*.76),innerHeight*(.1+Math.random()*.5));}
+    one();
+    fwTimer=setInterval(function(){one();if(Math.random()<.5)setTimeout(one,160);count++;if(count>12){clearInterval(fwTimer);}},420);
+    setTimeout(function(){['fin','song'].forEach(function(id){var f=document.getElementById(id);if(f)f.style.visibility='visible';});},2800);
+  }
+}
+function showMap(n){
+  setPaper('<div class="tag">Day '+n+' · your map</div><img class="map" src="'+CAL.maps[n-1]+'" alt="Treasure map"><div class="acts"><button class="btn" id="fin">Back to the calendar</button></div>');
+  document.getElementById('fin').onclick=closeAll;
+}
+function closeAll(){
+  clearInterval(fwTimer);stopRec();stopSong();hidePaper();paper.classList.remove('low');dim.classList.remove('song');dim.classList.remove('on');document.getElementById('wrap').classList.remove('up');busy=false;
+  var a=document.activeElement;if(a&&a.blur)a.blur();
+}
+
+var memClips={};
+function idb(){return new Promise(function(res,rej){try{var r=indexedDB.open('olesia-advent',1);r.onupgradeneeded=function(){r.result.createObjectStore('clips',{keyPath:'day'});};r.onsuccess=function(){res(r.result);};r.onerror=function(){rej(r.error);};}catch(e){rej(e);}});}
+function putClip(c){memClips[c.day]=c;return idb().then(function(db){return new Promise(function(res,rej){var tx=db.transaction('clips','readwrite');tx.objectStore('clips').put(c);tx.oncomplete=function(){res();};tx.onerror=function(){rej(tx.error);};});}).catch(function(){});}
+function allClips(){return idb().then(function(db){return new Promise(function(res,rej){var q=db.transaction('clips').objectStore('clips').getAll();q.onsuccess=function(){res(q.result);};q.onerror=function(){rej(q.error);};});}).catch(function(){return [];}).then(function(list){var m={};list.forEach(function(c){m[c.day]=c;});Object.keys(memClips).forEach(function(k){m[k]=memClips[k];});return Object.keys(m).map(function(k){return m[k];}).sort(function(a,b){return a.day-b.day;});});}
+
+var rec={};
+function cleanRec(){clearTimeout(rec.to);cancelAnimationFrame(rec.raf);try{if(rec.stream)rec.stream.getTracks().forEach(function(t){t.stop();});}catch(e){}try{if(rec.ac)rec.ac.close();}catch(e){}rec.stream=null;rec.ac=null;}
+function stopRec(){try{if(rec.mr&&rec.mr.state!=='inactive'){rec.cancel=true;rec.mr.stop();}}catch(e){}cleanRec();}
+function setMsg(t,bad){var m=document.getElementById('msg');if(!m)return;m.style.color=bad?'#b8322a':'#6b4a22';m.textContent=t;}
+function showRecord(n){
+  cur=n;rec={};
+  setPaper('<div class="tag">Day '+n+' · one more thing</div><div class="q">Well done! Now say any two words out loud. I will keep your voice for the Christmas song.</div><div class="recbox"><button class="mic" id="mic" aria-label="Record your voice"></button><div class="meter" id="meter">'+new Array(15).join('<i></i>')+'</div></div><div class="msg" id="msg"></div><div class="acts" id="ra"></div><div class="foot"><button class="btn ghost" id="typeit">Can\'t use the microphone? Type two words</button><button class="btn ghost" id="back">Later</button></div>');
+  setMsg('Tap the microphone, then speak.');
+  document.getElementById('mic').onclick=function(){if(rec.mr&&rec.mr.state==='recording'){rec.mr.stop();}else{startRec();}};
+  document.getElementById('back').onclick=closeAll;
+  document.getElementById('typeit').onclick=typeWords;
+  showPaper();
+}
+async function startRec(){
+  document.getElementById('ra').innerHTML='';
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.MediaRecorder){setMsg('This browser cannot record. Type two words instead.',true);return;}
+  try{rec.stream=await navigator.mediaDevices.getUserMedia({audio:true});}catch(e){setMsg('The microphone is blocked. Allow it in the browser settings, or type two words.',true);return;}
+  var types=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus'],mt='';
+  for(var i=0;i<types.length;i++){if(MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(types[i])){mt=types[i];break;}}
+  rec.chunks=[];rec.cancel=false;
+  rec.mr=mt?new MediaRecorder(rec.stream,{mimeType:mt}):new MediaRecorder(rec.stream);
+  rec.mr.ondataavailable=function(e){if(e.data&&e.data.size)rec.chunks.push(e.data);};
+  rec.mr.onstop=function(){var dur=Date.now()-rec.t0,mime=rec.mr.mimeType||mt||'audio/webm',chunks=rec.chunks;cleanRec();if(rec.cancel)return;endRec(new Blob(chunks,{type:mime}),dur);};
+  rec.t0=Date.now();rec.mr.start();
+  document.getElementById('mic').classList.add('on');
+  setMsg('Listening… tap the microphone again when you are done.');
+  try{
+    var AC2=window.AudioContext||window.webkitAudioContext;rec.ac=new AC2();
+    var src=rec.ac.createMediaStreamSource(rec.stream),an=rec.ac.createAnalyser();an.fftSize=256;src.connect(an);
+    var bars=document.querySelectorAll('#meter i'),data=new Uint8Array(an.frequencyBinCount);
+    (function loop(){an.getByteFrequencyData(data);for(var b=0;b<bars.length;b++){bars[b].style.height=(8+data[2+b*3]/255*92)+'%';}rec.raf=requestAnimationFrame(loop);})();
+  }catch(e){}
+  rec.to=setTimeout(function(){if(rec.mr&&rec.mr.state==='recording')rec.mr.stop();},6000);
+}
+function endRec(blob,dur){
+  var mic=document.getElementById('mic');if(!mic)return;
+  mic.classList.remove('on');
+  var bars=document.querySelectorAll('#meter i');for(var b=0;b<bars.length;b++)bars[b].style.height='8%';
+  if(dur<700||blob.size<500){setMsg('That was too short. Say two words!',true);return;}
+  setMsg('Sounds great! Listen, then keep it or tap the microphone to try again.');
+  var url=URL.createObjectURL(blob),au=new Audio(url);
+  document.getElementById('ra').innerHTML='<button class="btn" id="lis">Listen</button><button class="btn" id="keep" style="background:#2f7d4f">Keep it</button>';
+  document.getElementById('lis').onclick=function(){try{au.currentTime=0;au.play();}catch(e){}};
+  document.getElementById('keep').onclick=function(){keepClip({day:cur,blob:blob,dur:dur,text:null});};
+}
+function typeWords(){
+  stopRec();
+  document.getElementById('ra').innerHTML='<input id="tw" type="text" placeholder="Two words" autocomplete="off" autocapitalize="none" spellcheck="false" style="flex:1;min-width:0"><button class="btn" id="tk">Keep them</button>';
+  var tw=document.getElementById('tw');
+  function ok(){var w=tw.value.trim().split(/\s+/).filter(function(x){return /[a-z]/i.test(x);});if(w.length<2){setMsg('Type two words.',true);return;}keepClip({day:cur,blob:null,dur:0,text:w.slice(0,2).join(' ')});}
+  document.getElementById('tk').onclick=ok;
+  tw.onkeydown=function(e){if(e.key==='Enter')ok();};
+  setMsg('Type any two words.');
+  setTimeout(function(){try{tw.focus();}catch(e){}},100);
+}
+function keepClip(c){putClip(c).then(function(){solved[cur]=2;save();refresh();showDone(cur,true);});}
+
+var song={};
+function mtof(m){return 440*Math.pow(2,(m-69)/12);}
+function stopSong(){try{if(song.ac)song.ac.close();}catch(e){}song.ac=null;cancelAnimationFrame(song.raf);}
+function showSong(){
+  clearInterval(fwTimer);
+  setPaper('<div class="tag">Day 24 · your Christmas song</div><div class="done" id="sc">Making your song…</div><div class="acts"><button class="btn" id="sp">Stop</button><button class="btn ghost" id="sb">Back to the calendar</button></div>');
+  document.getElementById('wrap').classList.add('up');dim.classList.add('song');paper.classList.add('low');showPaper();
+  document.getElementById('sb').onclick=closeAll;
+  document.getElementById('sp').onclick=function(){if(song.ac){stopSong();this.textContent='Play again';document.getElementById('sc').textContent='Your song is ready.';}else{this.textContent='Stop';playSong();}};
+  playSong();
+}
+async function playSong(){
+  stopSong();
+  var AC2=window.AudioContext||window.webkitAudioContext,ac=new AC2();song.ac=ac;
+  try{ac.resume();}catch(e){}
+  var sc=document.getElementById('sc');if(sc)sc.textContent='Making your song…';
+  var clips=await allClips(),bufs=[];
+  for(var i=0;i<clips.length;i++){
+    var c=clips[i],bf=null;
+    if(c.blob){try{bf=await ac.decodeAudioData(await c.blob.arrayBuffer());}catch(e){bf=null;}}
+    bufs.push({day:c.day,buf:bf});
+  }
+  if(song.ac!==ac)return;
+  var master=ac.createGain();master.gain.value=.85;
+  var comp=ac.createDynamicsCompressor();master.connect(comp);comp.connect(ac.destination);
+  var an=ac.createAnalyser();comp.connect(an);window._songAn=an;
+  var dl=ac.createDelay(1);dl.delayTime.value=.3;var fb=ac.createGain();fb.gain.value=.32;var wet=ac.createGain();wet.gain.value=.28;
+  dl.connect(fb);fb.connect(dl);dl.connect(wet);wet.connect(master);
+  var noise=ac.createBuffer(1,ac.sampleRate,ac.sampleRate),nd=noise.getChannelData(0);for(var q=0;q<nd.length;q++)nd[q]=Math.random()*2-1;
+  function env(g,t,a,d,v){g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(v,t+a);g.gain.exponentialRampToValueAtTime(0.0001,t+a+d);}
+  function tone(f,t,a,d,v,type,send){var o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.value=f;env(g,t,a,d,v);o.connect(g);g.connect(master);if(send)g.connect(dl);o.start(t);o.stop(t+a+d+.05);}
+  function bell(m,t,v){var f=mtof(m);tone(f,t,.005,1.3,v,'sine',true);tone(f*2.01,t,.005,.7,v*.35,'sine',false);tone(f*3.99,t,.003,.25,v*.12,'sine',false);}
+  function kick(t){var o=ac.createOscillator(),g=ac.createGain();o.frequency.setValueAtTime(130,t);o.frequency.exponentialRampToValueAtTime(42,t+.12);env(g,t,.003,.22,.5);o.connect(g);g.connect(master);o.start(t);o.stop(t+.3);}
+  function shake(t,v){var s=ac.createBufferSource();s.buffer=noise;var hp=ac.createBiquadFilter();hp.type='highpass';hp.frequency.value=6500;var g=ac.createGain();env(g,t,.004,.07,v);s.connect(hp);hp.connect(g);g.connect(master);s.start(t,Math.random()*.5);s.stop(t+.12);}
+  var BPM=104,beat=60/BPM,bar=4*beat,t0=ac.currentTime+.5;
+  var mel=[[[76,1],[79,1],[81,2]],[[79,1],[76,1],[74,2]],[[72,1],[74,1],[76,1],[79,1]],[[76,4]],[[76,1],[79,1],[81,1],[84,1]],[[81,1],[79,1],[76,2]],[[74,1],[76,1],[74,1],[72,1]],[[72,4]]];
+  var chords=[[60,64,67,48],[57,60,64,45],[53,57,60,41],[60,64,67,48],[60,64,67,48],[57,60,64,45],[55,59,62,43],[60,64,67,48]];
+  var vis=[],slot=0;
+  for(var p=0;p<3;p++){
+    var tr=p===2?2:0;
+    for(var b=0;b<8;b++){
+      var B=p*8+b,tb=t0+B*bar,ch=chords[b],tt=tb;
+      mel[b].forEach(function(nt){bell(nt[0]+tr,tt,p===0?.2:.24);if(p===2)bell(nt[0]+tr+12,tt,.08);tt+=nt[1]*beat;});
+      [0,1,2].forEach(function(k){tone(mtof(ch[k]+tr),tb,.25,bar,.045,'triangle',false);});
+      for(var e=0;e<8;e++)shake(tb+e*beat/2,p===0?.04:(e%2?.09:.065));
+      if(p>=1){
+        tone(mtof(ch[3]+tr),tb,.01,beat*1.8,.18,'sine',false);tone(mtof(ch[3]+tr),tb+2*beat,.01,beat*1.8,.15,'sine',false);
+        kick(tb);kick(tb+2*beat);
+        [0,2].forEach(function(off,idx){
+          var tc=tb+off*beat,item=bufs.length?bufs[slot%bufs.length]:null;slot++;
+          if(!item)return;
+          if(item.buf){
+            var semis=ch[3]-48+tr+(idx?7:0),rate=Math.max(.75,Math.min(1.6,Math.pow(2,semis/12)));
+            var src=ac.createBufferSource();src.buffer=item.buf;src.playbackRate.value=rate;
+            var dur=Math.min(item.buf.duration/rate,beat*1.9),g=ac.createGain(),sd=ac.createGain();sd.gain.value=.55;
+            g.gain.setValueAtTime(0,tc);g.gain.linearRampToValueAtTime(1.1,tc+.02);g.gain.setValueAtTime(1.1,Math.max(tc+.03,tc+dur-.08));g.gain.linearRampToValueAtTime(0,tc+dur);
+            src.connect(g);g.connect(master);g.connect(sd);sd.connect(dl);src.start(tc);src.stop(tc+dur+.02);
+          }else{bell(84+tr,tc,.2);}
+          vis.push({t:tc,day:item.day});
+        });
+      }
+    }
+  }
+  var tF=t0+24*bar;
+  [74,78,81,86,90].forEach(function(m,i){bell(m,tF+i*.12,.22);});
+  [62,66,69].forEach(function(m){tone(mtof(m),tF,.2,5,.06,'triangle',false);});
+  kick(tF);
+  vis.push({t:tF+.1,end:true});
+  vis.sort(function(a,b){return a.t-b.t;});
+  var tEnd=tF+5;song.vi=0;
+  if(sc)sc.textContent='♪ Your voice is singing…';
+  (function loop(){
+    if(song.ac!==ac)return;
+    var now=ac.currentTime;
+    while(song.vi<vis.length&&vis[song.vi].t<=now){
+      var ev=vis[song.vi++];
+      if(ev.end){burst(innerWidth*.3,innerHeight*.3);setTimeout(function(){burst(innerWidth*.7,innerHeight*.25);},250);setTimeout(function(){burst(innerWidth*.5,innerHeight*.4);},520);var s2=document.getElementById('sc');if(s2)s2.textContent='Merry Christmas, '+NAME+'!';}
+      else{var bt=btns[ev.day-1];if(bt){bt.classList.remove('pulse');void bt.offsetWidth;bt.classList.add('pulse');var r=bt.getBoundingClientRect();addStars(r.left+r.width/2,r.top+r.height/2,0,10);setTimeout(function(){bt.classList.remove('pulse');},750);var s3=document.getElementById('sc');if(s3)s3.textContent='♪ Day '+ev.day+' · your voice';}}
+    }
+    if(now>tEnd){stopSong();var sp=document.getElementById('sp');if(sp)sp.textContent='Play again';return;}
+    song.raf=requestAnimationFrame(loop);
+  })();
+}
+
+var wasLocked=false;
+function tick(){
+  var t=openDate(1)-now();
+  if(t<=0){
+    if(!lock.classList.contains('off')){lock.classList.add('off');refresh();if(wasLocked){addStars(innerWidth/2,innerHeight/2);burst(innerWidth/2,innerHeight*.35);}}
+    return;
+  }
+  wasLocked=true;
+  lock.classList.remove('off');
+  var s=Math.floor(t/1000);
+  document.getElementById('cd-d').textContent=Math.floor(s/86400);
+  document.getElementById('cd-h').textContent=pad((s%86400)/3600);
+  document.getElementById('cd-m').textContent=pad((s%3600)/60);
+  document.getElementById('cd-s').textContent=pad(s%60);
+}
+refresh();tick();
+setInterval(tick,1000);
+setInterval(refresh,60000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden){tick();refresh();}});
+})();
+</script>
+</body>
+</html>
